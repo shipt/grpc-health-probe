@@ -1,0 +1,42 @@
+kind: pipeline
+name: test
+workspace:
+  base: /go
+  path: src/github.com/shipt/grpc-health-probe 
+
+trigger:
+  event:
+    - push
+    - pull_request
+    - tag
+
+steps:
+  - name: test
+    image: golang:1.14
+    commands:
+      - go test -v -tags=integration -coverprofile=coverage.txt -covermode=atomic ./...
+    environment:
+      CI_GITHUB_ACCESS_TOKEN:
+        from_secret: github_token
+  - name: coverage
+    image: plugins/codecov
+    environment:
+      CODECOV_TOKEN:
+        from_secret: CODECOV_TOKEN
+    files: coverage.txt
+  - name: docker-prep
+    image: harbor.shipttech.com/plugins/dockerspec
+    pull: always
+  - name: docker-build-and-push
+    image: plugins/docker
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    settings:
+      build_args_from_env:
+        - GITHUB_TOKEN
+      registry: harbor.shipttech.com
+      username: drone
+      password:
+        from_secret: harbor_drone_pass
+      env_file: "docker_args"
