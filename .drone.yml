@@ -24,9 +24,11 @@ steps:
       CODECOV_TOKEN:
         from_secret: CODECOV_TOKEN
     files: coverage.txt
+ 
   - name: docker-prep
     image: harbor.shipttech.com/plugins/dockerspec
     pull: always
+
   - name: docker-build-and-push
     image: plugins/docker
     environment:
