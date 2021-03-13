@@ -24,13 +24,6 @@ steps:
       CODECOV_TOKEN:
         from_secret: CODECOV_TOKEN
     files: coverage.txt
-  - name: slack
-    image: plugins/slack
-    when:
-      status: [ success ]
-    settings:
-      channel: shipt-it
-      webhook: https://hooks.slack.com/services/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
   - name: docker-prep
     image: harbor.shipttech.com/plugins/dockerspec
     pull: always
@@ -47,3 +40,8 @@ steps:
       password:
         from_secret: harbor_drone_pass
       env_file: "docker_args"
+
+volumes:
+  - name: docker-sock
+    host:
+      path: /var/run/docker.sock
