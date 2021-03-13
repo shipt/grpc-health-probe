@@ -1,8 +1,5 @@
 kind: pipeline
 name: test
-workspace:
-  base: /go
-  path: src/github.com/shipt/${DRONE_REPO_NAME}
 
 trigger:
   event:
@@ -10,23 +7,35 @@ trigger:
     - pull_request
     - tag
 
+workspace:
+  base: /go
+  path: src/github.com/shipt/${DRONE_REPO_NAME}
+
 steps:
   - name: test
     image: golang:1.13
     commands:
       - go test -v -tags=integration -coverprofile=coverage.txt -covermode=atomic ./...
     environment:
+      SERVICE_ENV: test
       CI_GITHUB_ACCESS_TOKEN:
-        from_secret: github_token
+        from_secret: github_token  
   - name: codecov
     image: plugins/codecov
     environment:
       CODECOV_TOKEN:
         from_secret: CODECOV_TOKEN
-    files: coverage.txt
+    files: coverage.txt  
+  - name: slack
+    image: plugins/slack
+    when:
+      status: [ success ]
+    settings:
+      channel: shipt-it
+      webhook: https://hooks.slack.com/services/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  
   - name: docker-prep
     image: harbor.shipttech.com/plugins/dockerspec
-    pull: always
+    pull: always  
   - name: docker-build-and-push
     image: plugins/docker
     environment:
@@ -40,7 +49,9 @@ steps:
       password:
         from_secret: harbor_drone_pass
       env_file: "docker_args"
-
+    volumes:
+      - name: docker-sock
+        path: /var/run/docker.sock
 volumes:
   - name: docker-sock
     host:
