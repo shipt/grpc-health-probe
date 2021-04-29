@@ -28,7 +28,8 @@ steps:
     files: coverage.txt  
   - name: docker-prep
     image: harbor.shipttech.com/plugins/dockerspec
-    pull: always  
+    pull: always
+
   - name: docker-build-and-push
     image: plugins/docker
     environment:
@@ -38,14 +39,4 @@ steps:
       build_args_from_env:
         - GITHUB_TOKEN
       registry: harbor.shipttech.com
-      username: drone
-      password:
-        from_secret: harbor_drone_pass
       env_file: "docker_args"
-    volumes:
-      - name: docker-sock
-        path: /var/run/docker.sock
-volumes:
-  - name: docker-sock
-    host:
-      path: /var/run/docker.sock
